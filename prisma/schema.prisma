@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RoleName {
+  USER
+  ADMIN
+}
+
+enum AuditAction {
+  REGISTER
+  LOGIN_SUCCESS
+  LOGIN_FAIL
+  REFRESH
+  LOGOUT
+  LOGOUT_ALL
+  VERIFY_EMAIL
+  RESEND_VERIFICATION
+  FORTGOT_PASSWORD
+  RESET_PASSWORD
+  CHANGE_PASSWORD
+}
+
+model User {
+  id                  String @id @default(uuid())
+  email               String @unique
+  passwordHash        String
+  isEmailVerified     Boolean @default(false)
+  failedLoginAttempts Int @default(0)
+  lockedUntil         DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  roles               UserRole[]
+  sessions            Session[]
+  emailVerification   EmailVerificationToken[]
+  passwordReset       PasswordResetToken[]
+  auditLogs           AuditLog[]
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        RoleName @unique
+  description String?
+
+  users       UserRole[]
+}
+
+model UserRole {
+  id     String @id @default(uuid())
+  userId String
+  roleId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+}
+
+model Session {
+  id               String   @id @default(uuid())
+  userId           String
+
+  refreshTokenHash String
+  userAgent        String?
+  ip               String?
+  isRevoked        Boolean  @default(false)
+
+  createdAt        DateTime @default(now())
+  expiresAt        DateTime
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model AuditLog {
+  id        String      @id @default(uuid())
+  userId    String?
+  action    AuditAction
+
+  ip        String?
+  userAgent String?
+
+  createdAt DateTime    @default(now())
+
+  user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([createdAt])
+}

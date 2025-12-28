@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+
+    "rootDir": ".",
+    "outDir": "dist",
+
+    "strict": true,
+    "skipLibCheck": true,
+
+    "types": ["node"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    "sourceMap": true
+  },
+  "include": ["src/**/*.ts", "prisma.config.ts", "prisma/**/*.ts"],
+  "exclude": ["dist", "node_modules", "generated"]
+}

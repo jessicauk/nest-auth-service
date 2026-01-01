@@ -4,7 +4,7 @@ import { User, Prisma } from '../../generated/prisma/client.js';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async user(
     userWhereUniqueInput: Prisma.UserWhereUniqueInput,
@@ -31,7 +31,10 @@ export class UserService {
     });
   }
 
-  async createUser(data: Prisma.UserCreateInput): Promise<User> {
+  async createUser(data: {
+    email: string;
+    passwordHash: string;
+  }): Promise<User> {
     return this.prisma.user.create({
       data,
     });
@@ -48,9 +51,45 @@ export class UserService {
     });
   }
 
+  // Recommended
+
   async deleteUser(where: Prisma.UserWhereUniqueInput): Promise<User> {
     return this.prisma.user.delete({
       where,
+    });
+  }
+
+  async findById(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        roles: { include: { role: true } },
+      },
+    });
+  }
+
+  async findByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+      include: {
+        roles: { include: { role: true } },
+      },
+    });
+  }
+
+  async findMany(params?: { skip?: number; take?: number }) {
+    const { skip, take } = params ?? {};
+    return this.prisma.user.findMany({
+      skip,
+      take,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
+        roles: { include: { role: true } },
+      },
     });
   }
 }
